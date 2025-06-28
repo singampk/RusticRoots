@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Header from '../../components/Header'
 
 export default function About() {
@@ -165,18 +166,18 @@ export default function About() {
             Let us help you bring your vision to life with our handcrafted furniture.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
+            <Link
               href="/products"
               className="bg-amber-800 text-white px-6 py-3 rounded-md font-medium hover:bg-amber-900 transition-colors"
             >
               Shop Our Collection
-            </a>
-            <a
+            </Link>
+            <Link
               href="/contact"
               className="border border-amber-800 text-amber-800 px-6 py-3 rounded-md font-medium hover:bg-amber-50 transition-colors"
             >
               Get in Touch
-            </a>
+            </Link>
           </div>
         </div>
       </div>

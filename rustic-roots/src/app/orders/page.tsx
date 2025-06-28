@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Header from '../../components/Header'
 
 interface OrderItem {
@@ -226,12 +227,12 @@ export default function MyOrders() {
             </svg>
             <h3 className="text-2xl font-bold text-gray-900 mb-4">No orders yet</h3>
             <p className="text-gray-600 mb-6">Start shopping to see your orders here.</p>
-            <a
+            <Link
               href="/products"
               className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-amber-800 hover:bg-amber-900"
             >
               Start Shopping
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="space-y-6">
@@ -354,7 +355,7 @@ export default function MyOrders() {
                 <p className="text-sm text-gray-600">Start a return or exchange</p>
               </div>
             </a>
-            <a
+            <Link
               href="/products"
               className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
@@ -365,7 +366,7 @@ export default function MyOrders() {
                 <h3 className="font-medium text-gray-900">Continue Shopping</h3>
                 <p className="text-sm text-gray-600">Browse our furniture collection</p>
               </div>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

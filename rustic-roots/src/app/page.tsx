@@ -184,6 +184,7 @@ export default function Home() {
               <ul className="space-y-2">
                 <li><Link href="/products" className="text-gray-300 hover:text-white">Products</Link></li>
                 <li><Link href="/about" className="text-gray-300 hover:text-white">About</Link></li>
+                <li><Link href="/custom" className="text-gray-300 hover:text-white">Custom Builds</Link></li>
                 <li><Link href="/contact" className="text-gray-300 hover:text-white">Contact</Link></li>
                 <li><Link href="/shipping" className="text-gray-300 hover:text-white">Shipping</Link></li>
               </ul>

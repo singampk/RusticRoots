@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Header from '../../components/Header'
 import ImageUpload from '../../components/ImageUpload'
 
@@ -87,8 +88,8 @@ export default function AdminDashboard() {
   async function fetchData() {
     try {
       const [productsRes, ordersRes] = await Promise.all([
-        fetch('/api/products'),
-        fetch('/api/orders')
+        fetch('/api/products', { credentials: 'include' }),
+        fetch('/api/orders', { credentials: 'include' })
       ])
       
       if (productsRes.ok) {
@@ -203,6 +204,7 @@ export default function AdminDashboard() {
 
       const response = await fetch(url, {
         method,
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -231,7 +233,8 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(`/api/products/${productId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
 
       if (response.ok) {
@@ -363,8 +366,17 @@ export default function AdminDashboard() {
 
             {/* Recent Orders */}
             <div className="bg-white rounded-lg shadow-sm">
-              <div className="px-6 py-4 border-b border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 className="text-lg font-medium text-gray-900">Recent Orders</h2>
+                <Link
+                  href="/admin/orders"
+                  className="bg-amber-800 text-white px-4 py-2 rounded-md hover:bg-amber-900 text-sm flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  Manage Orders
+                </Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">

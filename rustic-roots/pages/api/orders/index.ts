@@ -7,9 +7,19 @@ export default authenticate(async function handler(
   res: NextApiResponse
 ) {
   try {
+    console.log('Orders API called by user:', req.user.email, 'role:', req.user.role)
+    
     switch (req.method) {
       case 'GET':
+        // Allow admin to see all orders, regular users only see their own orders
+        const whereClause = req.user.role === 'ADMIN' 
+          ? {} 
+          : { userId: req.user.id }
+          
+        console.log('Using where clause:', whereClause)
+          
         const orders = await prisma.order.findMany({
+          where: whereClause,
           include: {
             user: {
               select: {
@@ -20,11 +30,22 @@ export default authenticate(async function handler(
             },
             items: {
               include: {
-                product: true
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true
+                  }
+                }
               }
             }
+          },
+          orderBy: {
+            createdAt: 'desc'
           }
         })
+        
+        console.log('Found orders:', orders.length)
         return res.status(200).json(orders)
       
       case 'POST':

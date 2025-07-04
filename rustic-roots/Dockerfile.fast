@@ -1,0 +1,32 @@
+# Fast Docker build optimized for development
+FROM node:18-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+# Use npm install with cache mount for faster builds
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline --no-audit
+
+# Development image
+FROM base AS dev
+WORKDIR /app
+RUN apk add --no-cache libc6-compat
+
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+EXPOSE 3000
+ENV PORT=3000
+ENV NODE_ENV=development
+
+# Start development server
+CMD ["npm", "run", "dev"]

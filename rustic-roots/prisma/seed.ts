@@ -147,33 +147,252 @@ async function main() {
 
   console.log('✅ Created products')
 
-  // Create a sample order
-  const sampleOrder = await prisma.order.create({
-    data: {
-      total: 1749.98,
-      status: 'completed',
-      userId: customerUser.id,
-      items: {
-        create: [
-          {
-            productId: products[0].id,
-            quantity: 1,
-            price: products[0].price
-          },
-          {
-            productId: products[3].id,
-            quantity: 1,
-            price: products[3].price
-          }
-        ]
-      }
-    },
-    include: {
-      items: true
-    }
-  })
+  // Create sample orders with different statuses
+  const sampleOrders = await Promise.all([
+    // Recent orders - RECEIVED_ORDER status
+    prisma.order.create({
+      data: {
+        total: 1299.99,
+        status: 'RECEIVED_ORDER',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        items: {
+          create: [
+            {
+              productId: products[0].id, // Rustic Oak Dining Table
+              quantity: 1,
+              price: products[0].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+    prisma.order.create({
+      data: {
+        total: 649.99,
+        status: 'RECEIVED_ORDER',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+        items: {
+          create: [
+            {
+              productId: products[2].id, // Cedar Chest
+              quantity: 1,
+              price: products[2].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
 
-  console.log('✅ Created sample order')
+    // Orders being reviewed - REVIEWING_ORDER status
+    prisma.order.create({
+      data: {
+        total: 1599.98,
+        status: 'REVIEWING_ORDER',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+        updatedAt: new Date(Date.now() - 8 * 60 * 60 * 1000), // Updated 8 hours ago
+        items: {
+          create: [
+            {
+              productId: products[5].id, // Oak Dining Chairs (Set of 4)
+              quantity: 1,
+              price: products[5].price
+            },
+            {
+              productId: products[5].id, // Extra set
+              quantity: 1,
+              price: products[5].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+    prisma.order.create({
+      data: {
+        total: 1499.99,
+        status: 'REVIEWING_ORDER',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 36 * 60 * 60 * 1000), // 1.5 days ago
+        updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // Updated 12 hours ago
+        items: {
+          create: [
+            {
+              productId: products[8].id, // Mahogany Office Desk
+              quantity: 1,
+              price: products[8].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+
+    // Work in progress orders - WORK_IN_PROGRESS status
+    prisma.order.create({
+      data: {
+        total: 899.99,
+        status: 'WORK_IN_PROGRESS',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // Updated 3 days ago
+        items: {
+          create: [
+            {
+              productId: products[1].id, // Walnut Bookshelf
+              quantity: 1,
+              price: products[1].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+    prisma.order.create({
+      data: {
+        total: 949.98,
+        status: 'WORK_IN_PROGRESS',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // Updated 5 days ago
+        items: {
+          create: [
+            {
+              productId: products[3].id, // Maple Rocking Chair
+              quantity: 1,
+              price: products[3].price
+            },
+            {
+              productId: products[4].id, // Pine Coffee Table
+              quantity: 1,
+              price: products[4].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+
+    // Shipping orders - IN_SHIPPING status
+    prisma.order.create({
+      data: {
+        total: 1649.98,
+        status: 'IN_SHIPPING',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
+        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // Updated 2 days ago
+        items: {
+          create: [
+            {
+              productId: products[6].id, // Cherry Wood Dresser
+              quantity: 1,
+              price: products[6].price
+            },
+            {
+              productId: products[7].id, // Reclaimed Wood Console Table
+              quantity: 1,
+              price: products[7].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+    prisma.order.create({
+      data: {
+        total: 349.99,
+        status: 'IN_SHIPPING',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000), // 12 days ago
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Updated 1 day ago
+        items: {
+          create: [
+            {
+              productId: products[9].id, // Teak Outdoor Bench
+              quantity: 1,
+              price: products[9].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+
+    // Delivered orders - DELIVERED status
+    prisma.order.create({
+      data: {
+        total: 1749.98,
+        status: 'DELIVERED',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000), // 21 days ago
+        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Updated 7 days ago
+        items: {
+          create: [
+            {
+              productId: products[0].id, // Rustic Oak Dining Table
+              quantity: 1,
+              price: products[0].price
+            },
+            {
+              productId: products[3].id, // Maple Rocking Chair
+              quantity: 1,
+              price: products[3].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+    prisma.order.create({
+      data: {
+        total: 1099.99,
+        status: 'DELIVERED',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // Updated 14 days ago
+        items: {
+          create: [
+            {
+              productId: products[6].id, // Cherry Wood Dresser
+              quantity: 1,
+              price: products[6].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    }),
+    prisma.order.create({
+      data: {
+        total: 949.98,
+        status: 'DELIVERED',
+        userId: customerUser.id,
+        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000), // 45 days ago
+        updatedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Updated 30 days ago
+        items: {
+          create: [
+            {
+              productId: products[1].id, // Walnut Bookshelf
+              quantity: 1,
+              price: products[1].price
+            },
+            {
+              productId: products[9].id, // Teak Outdoor Bench
+              quantity: 1,
+              price: products[9].price
+            }
+          ]
+        }
+      },
+      include: { items: true }
+    })
+  ])
+
+  console.log('✅ Created sample orders')
 
   console.log(`
 🎉 Database seeded successfully!
@@ -187,7 +406,7 @@ async function main() {
    Password: password123
 
 📦 Created ${products.length} products
-📋 Created 1 sample order
+📋 Created ${sampleOrders.length} sample orders
   `)
 }
 

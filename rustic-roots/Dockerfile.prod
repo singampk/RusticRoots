@@ -1,0 +1,61 @@
+# Production Dockerfile for Rustic Roots
+FROM node:18-alpine AS base
+
+# Install dependencies and build
+FROM base AS builder
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache libc6-compat
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci --ignore-scripts && npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build the application
+RUN npm run build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache libc6-compat curl
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy built application
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Copy Prisma files
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
+# Install Prisma CLI for database operations
+RUN npm install -g prisma
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV HOSTNAME="0.0.0.0"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/api/products || exit 1
+
+# Start the application
+CMD ["node", "server.js"]

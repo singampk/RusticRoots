@@ -1,0 +1,55 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15
+    container_name: rustic-roots-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rustic_roots}
+      POSTGRES_USER: ${POSTGRES_USER:-rustic_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-RusticRoots2024!}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./prisma/init-with-data.sql:/docker-entrypoint-initdb.d/init-with-data.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - rustic-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rustic_admin} -d ${POSTGRES_DB:-rustic_roots}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Next.js Application (Fast Build)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.fast
+      target: dev
+    container_name: rustic-roots-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rustic_admin}:${POSTGRES_PASSWORD:-RusticRoots2024!}@database:5432/${POSTGRES_DB:-rustic_roots}?sslmode=disable
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-super-secret-key-here}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - rustic-network
+
+volumes:
+  postgres_data:
+
+networks:
+  rustic-network:
+    driver: bridge

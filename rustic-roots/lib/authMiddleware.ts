@@ -26,7 +26,10 @@ export const requireRole = (role: 'USER' | 'ADMIN') => {
 
 export const authenticate = (handler: AuthHandler) => {
   return async (req: AuthenticatedRequest, res: NextApiResponse) => {
-    const token = await getToken({ req })
+    const token = await getToken({ 
+      req, 
+      secret: process.env.NEXTAUTH_SECRET 
+    })
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' })
     }
@@ -58,7 +61,10 @@ export const authenticate = (handler: AuthHandler) => {
 
 // Helper function for direct authentication check
 export const verifyAuth = async (req: NextApiRequest) => {
-  const token = await getToken({ req })
+  const token = await getToken({ 
+    req, 
+    secret: process.env.NEXTAUTH_SECRET 
+  })
   if (!token) {
     throw new Error('Unauthorized')
   }

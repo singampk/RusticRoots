@@ -47,11 +47,17 @@ CREATE TABLE IF NOT EXISTS "Order" (
     "orderNumber" TEXT NOT NULL UNIQUE,
     "userId" TEXT NOT NULL,
     "total" DECIMAL(10,2) NOT NULL,
+    "subtotal" DECIMAL(10,2) NOT NULL,
+    "discountAmount" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "shippingAddress" JSONB NOT NULL,
+    "promotionId" TEXT,
+    "promotionCode" TEXT,
+    "promotionSnapshot" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY ("promotionId") REFERENCES "Promotion"("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- Create OrderItem table
@@ -63,6 +69,41 @@ CREATE TABLE IF NOT EXISTS "OrderItem" (
     "price" DECIMAL(10,2) NOT NULL,
     FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- Create Promotion table
+CREATE TABLE IF NOT EXISTS "Promotion" (
+    "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "code" TEXT NOT NULL UNIQUE,
+    "type" TEXT NOT NULL, -- 'FIXED_AMOUNT' or 'PERCENTAGE'
+    "value" DECIMAL(10,2) NOT NULL,
+    "usageType" TEXT NOT NULL, -- 'ONE_TIME' or 'MULTIPLE_USE'
+    "maxUses" INTEGER,
+    "currentUses" INTEGER NOT NULL DEFAULT 0,
+    "minOrderValue" DECIMAL(10,2),
+    "maxDiscount" DECIMAL(10,2),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdById" TEXT NOT NULL,
+    FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- Create PromotionUsage table
+CREATE TABLE IF NOT EXISTS "PromotionUsage" (
+    "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "promotionId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "orderId" TEXT NOT NULL,
+    "usedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("promotionId") REFERENCES "Promotion"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    UNIQUE ("promotionId", "userId", "orderId")
 );
 
 -- Insert sample users
@@ -85,10 +126,19 @@ INSERT INTO "Product" ("id", "name", "description", "price", "images", "category
 ('product-10', 'Custom Wardrobe', 'Full-height wardrobe with sliding doors and internal organization system. Made to measure for your space.', 2299.00, ARRAY['/images/wardrobe.jpg'], 'Bedroom', 1, 'admin-user-id')
 ON CONFLICT ("id") DO NOTHING;
 
+-- Insert sample promotions
+INSERT INTO "Promotion" ("id", "name", "description", "code", "type", "value", "usageType", "maxUses", "currentUses", "minOrderValue", "maxDiscount", "isActive", "startDate", "endDate", "createdById") VALUES
+('promo-1', 'Welcome Discount', 'Get 10% off your first order', 'WELCOME10', 'PERCENTAGE', 10.00, 'ONE_TIME', 1, 0, 100.00, 200.00, true, '2024-01-01 00:00:00', '2025-12-31 23:59:59', 'admin-user-id'),
+('promo-2', 'Summer Sale', 'Save $50 on orders over $500', 'SUMMER50', 'FIXED_AMOUNT', 50.00, 'MULTIPLE_USE', 100, 5, 500.00, NULL, true, '2024-06-01 00:00:00', '2025-08-31 23:59:59', 'admin-user-id'),
+('promo-3', 'Free Shipping', 'Free shipping on any order', 'FREESHIP', 'FIXED_AMOUNT', 25.00, 'MULTIPLE_USE', 500, 12, 0.00, NULL, true, '2024-01-01 00:00:00', '2025-12-31 23:59:59', 'admin-user-id'),
+('promo-4', 'Black Friday', 'Mega 20% off everything', 'BLACKFRIDAY20', 'PERCENTAGE', 20.00, 'ONE_TIME', 1, 0, 200.00, 300.00, false, '2024-11-25 00:00:00', '2024-11-30 23:59:59', 'admin-user-id'),
+('promo-5', 'Bulk Order', 'Save 15% on orders over $1000', 'BULK15', 'PERCENTAGE', 15.00, 'MULTIPLE_USE', 50, 2, 1000.00, 500.00, true, '2024-01-01 00:00:00', '2025-12-31 23:59:59', 'admin-user-id')
+ON CONFLICT ("code") DO NOTHING;
+
 -- Insert sample orders
-INSERT INTO "Order" ("id", "orderNumber", "userId", "total", "status", "shippingAddress") VALUES
-('order-1', 'RR-2025-001', 'customer-user-id', 899.00, 'COMPLETED', '{"name": "John Smith", "address": "123 Main St", "city": "Sydney", "state": "NSW", "postcode": "2000", "country": "Australia"}'),
-('order-2', 'RR-2025-002', 'customer-user-id', 648.00, 'SHIPPED', '{"name": "John Smith", "address": "123 Main St", "city": "Sydney", "state": "NSW", "postcode": "2000", "country": "Australia"}')
+INSERT INTO "Order" ("id", "orderNumber", "userId", "total", "subtotal", "discountAmount", "status", "shippingAddress") VALUES
+('order-1', 'RR-2025-001', 'customer-user-id', 899.00, 899.00, 0.00, 'COMPLETED', '{"name": "John Smith", "address": "123 Main St", "city": "Sydney", "state": "NSW", "postcode": "2000", "country": "Australia"}'),
+('order-2', 'RR-2025-002', 'customer-user-id', 648.00, 698.00, 50.00, 'SHIPPED', '{"name": "John Smith", "address": "123 Main St", "city": "Sydney", "state": "NSW", "postcode": "2000", "country": "Australia"}')
 ON CONFLICT ("orderNumber") DO NOTHING;
 
 -- Insert sample order items

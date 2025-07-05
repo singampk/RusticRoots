@@ -9,12 +9,17 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --only=production --ignore-scripts
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copy package files and install all dependencies (including dev)
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts
+
+# Copy source code
 COPY . .
 
 # Generate Prisma client

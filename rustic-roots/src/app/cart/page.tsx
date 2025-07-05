@@ -2,11 +2,15 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useState } from 'react'
 import Header from '../../components/Header'
 import { useCart } from '../../context/CartContext'
 
 export default function Cart() {
-  const { state, dispatch } = useCart()
+  const { state, dispatch, applyPromotion, removePromotion } = useCart()
+  const [promoCode, setPromoCode] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoError, setPromoError] = useState('')
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -31,6 +35,30 @@ export default function Cart() {
 
   const clearCart = () => {
     dispatch({ type: 'CLEAR_CART' })
+  }
+
+  const handleApplyPromotion = async () => {
+    if (!promoCode.trim()) return
+
+    setPromoLoading(true)
+    setPromoError('')
+
+    const result = await applyPromotion(promoCode.trim())
+
+    if (result.success) {
+      setPromoCode('')
+      setPromoError('')
+    } else {
+      setPromoError(result.error || 'Failed to apply promotion')
+    }
+
+    setPromoLoading(false)
+  }
+
+  const handleRemovePromotion = () => {
+    removePromotion()
+    setPromoCode('')
+    setPromoError('')
   }
 
   if (state.items.length === 0) {
@@ -171,11 +199,71 @@ export default function Cart() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
               
+              {/* Promotion Code Section */}
+              <div className="mb-6">
+                <label htmlFor="promoCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  Promotion Code
+                </label>
+                {state.appliedPromotion ? (
+                  <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-green-800">
+                          {state.appliedPromotion.name}
+                        </p>
+                        <p className="text-xs text-green-600">
+                          Code: {state.appliedPromotion.code}
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleRemovePromotion}
+                        className="text-green-600 hover:text-green-800 text-sm font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex">
+                    <input
+                      id="promoCode"
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Enter promotion code"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
+                    />
+                    <button
+                      onClick={handleApplyPromotion}
+                      disabled={promoLoading || !promoCode.trim()}
+                      className="px-4 py-2 bg-amber-800 text-white rounded-r-md hover:bg-amber-900 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-medium"
+                    >
+                      {promoLoading ? 'Applying...' : 'Apply'}
+                    </button>
+                  </div>
+                )}
+                {promoError && (
+                  <p className="mt-2 text-sm text-red-600">{promoError}</p>
+                )}
+              </div>
+              
               <div className="space-y-4">
                 <div className="flex justify-between py-2">
                   <span className="text-gray-700 font-medium">Subtotal</span>
-                  <span className="font-bold text-gray-900">{formatPrice(state.total)}</span>
+                  <span className="font-bold text-gray-900">{formatPrice(state.subtotal)}</span>
                 </div>
+                
+                {state.appliedPromotion && state.discountAmount > 0 && (
+                  <div className="flex justify-between py-2">
+                    <span className="text-green-700 font-medium">
+                      Discount ({state.appliedPromotion.code})
+                    </span>
+                    <span className="font-bold text-green-600">
+                      -{formatPrice(state.discountAmount)}
+                    </span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between py-2">
                   <span className="text-gray-700 font-medium">Shipping</span>
                   <span className="font-bold text-green-600">Free</span>

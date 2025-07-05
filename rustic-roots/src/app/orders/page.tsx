@@ -1,34 +1,43 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '../../components/Header'
 
+type OrderStatus = 'RECEIVED_ORDER' | 'REVIEWING_ORDER' | 'WORK_IN_PROGRESS' | 'IN_SHIPPING' | 'DELIVERED'
+
 interface OrderItem {
   id: string
-  name: string
-  price: number
   quantity: number
-  image: string
+  price: number
+  product: {
+    id: string
+    name: string
+    price: number
+  }
 }
 
 interface Order {
   id: string
-  orderNumber: string
-  date: string
-  status: 'processing' | 'shipped' | 'delivered' | 'cancelled'
   total: number
+  subtotal: number
+  discountAmount: number
+  status: OrderStatus
+  notes: string | null
+  promotionCode: string | null
+  promotionSnapshot: object | null
+  createdAt: string
+  updatedAt: string
   items: OrderItem[]
-  shippingAddress: {
+  promotion: {
+    id: string
     name: string
-    street: string
-    city: string
-    state: string
-    zipCode: string
-  }
-  trackingNumber?: string
+    code: string
+    type: string
+    value: number
+  } | null
 }
 
 export default function MyOrders() {
@@ -36,6 +45,34 @@ export default function MyOrders() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const response = await fetch('/api/orders', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (response.ok) {
+        const ordersData = await response.json()
+        setOrders(ordersData)
+      } else {
+        if (response.status === 401) {
+          router.push('/auth/signin')
+          return
+        }
+        setError('Failed to load orders')
+      }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error)
+      setError('Failed to load orders')
+    } finally {
+      setLoading(false)
+    }
+  }, [router])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -45,94 +82,8 @@ export default function MyOrders() {
       return
     }
 
-    // Mock orders data - replace with actual API call
-    const mockOrders: Order[] = [
-      {
-        id: '1',
-        orderNumber: 'RR-2024-001',
-        date: '2024-06-15',
-        status: 'delivered',
-        total: 1299.99,
-        trackingNumber: 'TRK123456789',
-        items: [
-          {
-            id: '1',
-            name: 'Rustic Oak Dining Table',
-            price: 1299.99,
-            quantity: 1,
-            image: '/api/placeholder/300/300'
-          }
-        ],
-        shippingAddress: {
-          name: 'John Doe',
-          street: '123 Main St',
-          city: 'Springfield',
-          state: 'IL',
-          zipCode: '62701'
-        }
-      },
-      {
-        id: '2',
-        orderNumber: 'RR-2024-002',
-        date: '2024-06-20',
-        status: 'shipped',
-        total: 459.98,
-        trackingNumber: 'TRK987654321',
-        items: [
-          {
-            id: '2',
-            name: 'Walnut Bookshelf',
-            price: 399.99,
-            quantity: 1,
-            image: '/api/placeholder/300/300'
-          },
-          {
-            id: '3',
-            name: 'Pine Side Table',
-            price: 59.99,
-            quantity: 1,
-            image: '/api/placeholder/300/300'
-          }
-        ],
-        shippingAddress: {
-          name: 'John Doe',
-          street: '123 Main St',
-          city: 'Springfield',
-          state: 'IL',
-          zipCode: '62701'
-        }
-      },
-      {
-        id: '3',
-        orderNumber: 'RR-2024-003',
-        date: '2024-06-25',
-        status: 'processing',
-        total: 1899.99,
-        items: [
-          {
-            id: '4',
-            name: 'Cherry Executive Desk',
-            price: 1899.99,
-            quantity: 1,
-            image: '/api/placeholder/300/300'
-          }
-        ],
-        shippingAddress: {
-          name: 'John Doe',
-          street: '123 Main St',
-          city: 'Springfield',
-          state: 'IL',
-          zipCode: '62701'
-        }
-      }
-    ]
-
-    // Simulate API call
-    setTimeout(() => {
-      setOrders(mockOrders)
-      setLoading(false)
-    }, 1000)
-  }, [session, status, router])
+    fetchOrders()
+  }, [session, status, router, fetchOrders])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -149,45 +100,70 @@ export default function MyOrders() {
     })
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case 'processing':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'shipped':
+      case 'RECEIVED_ORDER':
         return 'bg-blue-100 text-blue-800'
-      case 'delivered':
+      case 'REVIEWING_ORDER':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'WORK_IN_PROGRESS':
+        return 'bg-purple-100 text-purple-800'
+      case 'IN_SHIPPING':
+        return 'bg-orange-100 text-orange-800'
+      case 'DELIVERED':
         return 'bg-green-100 text-green-800'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const getStatusIcon = (status: string) => {
+  const getStatusLabel = (status: OrderStatus) => {
     switch (status) {
-      case 'processing':
+      case 'RECEIVED_ORDER':
+        return 'Order Received'
+      case 'REVIEWING_ORDER':
+        return 'Under Review'
+      case 'WORK_IN_PROGRESS':
+        return 'In Production'
+      case 'IN_SHIPPING':
+        return 'Shipped'
+      case 'DELIVERED':
+        return 'Delivered'
+      default:
+        return status
+    }
+  }
+
+  const getStatusIcon = (status: OrderStatus) => {
+    switch (status) {
+      case 'RECEIVED_ORDER':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        )
+      case 'REVIEWING_ORDER':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        )
+      case 'WORK_IN_PROGRESS':
         return (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )
-      case 'shipped':
+      case 'IN_SHIPPING':
         return (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         )
-      case 'delivered':
+      case 'DELIVERED':
         return (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        )
-      case 'cancelled':
-        return (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         )
       default:
@@ -220,7 +196,21 @@ export default function MyOrders() {
           <p className="text-gray-600">Track your order history and current shipments.</p>
         </div>
 
-        {orders.length === 0 ? (
+        {error ? (
+          <div className="text-center bg-white rounded-lg shadow-sm p-12">
+            <svg className="mx-auto h-16 w-16 text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Orders</h3>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button
+              onClick={fetchOrders}
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-amber-800 hover:bg-amber-900"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : orders.length === 0 ? (
           <div className="text-center bg-white rounded-lg shadow-sm p-12">
             <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -244,16 +234,16 @@ export default function MyOrders() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
-                          Order #{order.orderNumber}
+                          Order #{order.id.slice(-8)}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Placed on {formatDate(order.date)}
+                          Placed on {formatDate(order.createdAt)}
                         </p>
                       </div>
                       <div className="flex items-center mt-2 sm:mt-0">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                           {getStatusIcon(order.status)}
-                          <span className="ml-1 capitalize">{order.status}</span>
+                          <span className="ml-1">{getStatusLabel(order.status)}</span>
                         </span>
                       </div>
                     </div>
@@ -261,10 +251,18 @@ export default function MyOrders() {
                       <p className="text-lg font-bold text-gray-900">
                         {formatPrice(order.total)}
                       </p>
-                      {order.trackingNumber && (
-                        <p className="text-sm text-gray-600">
-                          Tracking: {order.trackingNumber}
-                        </p>
+                      {order.discountAmount > 0 && (
+                        <div className="text-sm text-gray-600">
+                          <p>Subtotal: {formatPrice(order.subtotal)}</p>
+                          <p className="text-red-600">Discount: -{formatPrice(order.discountAmount)}</p>
+                        </div>
+                      )}
+                      {order.promotion && (
+                        <div className="text-xs mt-1">
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                            {order.promotion.code}
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -284,14 +282,14 @@ export default function MyOrders() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-base font-medium text-gray-900">
-                            {item.name}
+                            {item.product.name}
                           </h4>
                           <p className="text-sm text-gray-600">
                             Quantity: {item.quantity}
                           </p>
                         </div>
                         <div className="text-base font-medium text-gray-900">
-                          {formatPrice(item.price)}
+                          {formatPrice(item.price * item.quantity)}
                         </div>
                       </div>
                     ))}
@@ -302,23 +300,35 @@ export default function MyOrders() {
                 <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
                     <div className="text-sm text-gray-600">
-                      <p><strong>Ship to:</strong> {order.shippingAddress.name}</p>
-                      <p>{order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
+                      {order.notes && (
+                        <div>
+                          <p><strong>Notes:</strong> {order.notes}</p>
+                        </div>
+                      )}
+                      {order.promotion && (
+                        <div className="mt-2">
+                          <p><strong>Promotion Applied:</strong> {order.promotion.name}</p>
+                          <p className="text-xs text-green-600">Code: {order.promotion.code}</p>
+                        </div>
+                      )}
                     </div>
                     <div className="flex space-x-3">
-                      {order.trackingNumber && (
+                      {order.status === 'IN_SHIPPING' && (
                         <button className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                           Track Package
                         </button>
                       )}
-                      {order.status === 'delivered' && (
+                      {order.status === 'DELIVERED' && (
                         <button className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                           Write Review
                         </button>
                       )}
-                      <button className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        View Details
-                      </button>
+                      <Link
+                        href="/contact"
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        Contact Support
+                      </Link>
                     </div>
                   </div>
                 </div>

@@ -38,6 +38,15 @@ export default authenticate(async function handler(
                   }
                 }
               }
+            },
+            promotion: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+                type: true,
+                value: true
+              }
             }
           },
           orderBy: {

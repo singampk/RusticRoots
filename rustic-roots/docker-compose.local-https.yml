@@ -1,0 +1,72 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15
+    container_name: rusticroots-db-https
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rustic_roots
+      POSTGRES_USER: rustic_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-RusticRoots2024!}
+    volumes:
+      - postgres_data_https:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rustic_admin -d rustic_roots"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Application
+  app:
+    image: singampk/rustic-roots:v1.1.0
+    container_name: rusticroots-app-https
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://rustic_admin:${POSTGRES_PASSWORD:-RusticRoots2024!}@database:5432/rustic_roots?sslmode=disable
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-local-https-secret-key}
+      NEXTAUTH_URL: https://therusticroots.local
+    expose:
+      - "3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/products"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx SSL Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: rusticroots-nginx-https
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/ssl-local.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - frontend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data_https:
+
+networks:
+  frontend:
+  backend:
+    internal: true

@@ -1,0 +1,51 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15
+    container_name: rusticroots-db-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rustic_roots
+      POSTGRES_USER: rustic_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-RusticRoots2024!}
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rustic_admin -d rustic_roots"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Next.js Application (HTTP)
+  app:
+    image: singampk/rustic-roots:v1.1.0
+    container_name: rusticroots-app-local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://rustic_admin:${POSTGRES_PASSWORD:-RusticRoots2024!}@database:5432/rustic_roots?sslmode=disable
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-local-dev-secret-key}
+      NEXTAUTH_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/products"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data_local:
+
+networks:
+  backend:

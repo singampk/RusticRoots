@@ -99,7 +99,7 @@ export default async function handler(
         message: 'Image uploaded successfully to S3'
       })
     } catch (s3Error) {
-      console.error('S3 upload failed, using placeholder:', s3Error.message)
+      console.error('S3 upload failed, using placeholder:', s3Error instanceof Error ? s3Error.message : s3Error)
       return res.status(200).json({ 
         imageUrl: '/images/placeholder.svg',
         message: 'S3 upload failed, using placeholder. Check S3 permissions.'

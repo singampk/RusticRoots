@@ -21,8 +21,7 @@ services:
 
   # Next.js Application
   app:
-    build: .
-    # image: singampk/rustic-roots:v1.1.0
+    image: singampk/rusticroots:v1.2.0
     container_name: rusticroots-app-prod
     restart: unless-stopped
     environment:

@@ -13,6 +13,8 @@
 # testing
 */coverage
 
+.amplify-deploy
+
 # next.js
 */.next/
 */out/

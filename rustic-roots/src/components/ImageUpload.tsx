@@ -64,6 +64,18 @@ export default function ImageUpload({
       } else {
         const error = await response.json()
         console.error('Upload error:', error)
+        
+        // Show user-friendly error messages
+        if (response.status === 401) {
+          alert('Please sign in to upload images')
+        } else if (response.status === 400) {
+          alert(`Upload failed: ${error.error || 'Invalid file'}`)
+        } else if (response.status === 500) {
+          alert(`Upload failed: ${error.error || 'Server error'}`)
+        } else {
+          alert(`Upload failed: ${error.error || 'Unknown error'}`)
+        }
+        
         return null
       }
     } catch (error) {

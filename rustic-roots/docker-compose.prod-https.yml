@@ -21,7 +21,8 @@ services:
 
   # Next.js Application
   app:
-    image: singampk/rustic-roots:v1.1.0
+    build: .
+    # image: singampk/rustic-roots:v1.1.0
     container_name: rusticroots-app-prod
     restart: unless-stopped
     environment:
@@ -29,6 +30,11 @@ services:
       DATABASE_URL: postgresql://rustic_admin:${POSTGRES_PASSWORD:-RusticRoots2024!}@database:5432/rustic_roots?sslmode=disable
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-production-secret}
       NEXTAUTH_URL: https://therusticroots.com.au
+      # AWS S3 Configuration (uncomment and set values to enable S3 uploads)
+      # AWS_REGION: ${AWS_REGION:-us-east-1}
+      # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      # AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      # AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
     expose:
       - "3000"
     depends_on:

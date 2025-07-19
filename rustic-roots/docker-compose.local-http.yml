@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: rustic_roots
       POSTGRES_USER: rustic_admin
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-RusticRoots2024!}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:abc}
     volumes:
       - postgres_data_local:/var/lib/postgresql/data
     ports:
@@ -28,11 +28,13 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://rustic_admin:${POSTGRES_PASSWORD:-RusticRoots2024!}@database:5432/rustic_roots?sslmode=disable
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-}
+      DATABASE_URL: postgresql://rustic_admin:${POSTGRES_PASSWORD:abc}@database:5432/rustic_roots?sslmode=disable
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:abc
       NEXTAUTH_URL: http://localhost:3000
       #AWS S3 Configuration (uncomment and set values to enable S3 uploads)
       AWS_REGION: ${AWS_REGION:-ap-southeast-2}
+      AWS_ACCESS_KEY_ID: abc
+      AWS_SECRET_ACCESS_KEY: abc
       AWS_S3_BUCKET_NAME: files.therusticroots.com.au
     ports:
       - "3000:3000"

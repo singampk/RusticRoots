@@ -1,49 +1,26 @@
 services:
-  # PostgreSQL Database
-  database:
-    image: postgres:15
-    container_name: rusticroots-db-prod
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: rustic_roots
-      POSTGRES_USER: rustic_admin
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-RusticRoots2024!}
-    volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
-      - ./prisma/init-with-data.sql:/docker-entrypoint-initdb.d/init-with-data.sql:ro
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rustic_admin -d rustic_roots"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Next.js Application
   app:
-    image: singampk/rusticroots:v1.2.0
+    image: singampk/rusticroots:v1.6.1
     container_name: rusticroots-app-prod
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://rustic_admin:${POSTGRES_PASSWORD:-RusticRoots2024!}@database:5432/rustic_roots?sslmode=disable
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-production-secret}
+      DATABASE_URL: postgresql://rustic_user:${POSTGRES_PASSWORD:-<>>}@<>>.cli0gkwcy4ii.ap-southeast-2.rds.amazonaws.com:5432/rustic_roots?sslmode=require
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-<>>}
       NEXTAUTH_URL: https://therusticroots.com.au
       # AWS S3 Configuration (uncomment and set values to enable S3 uploads)
-      # AWS_REGION: ${AWS_REGION:-us-east-1}
-      # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      # AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      # AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+      AWS_REGION: ${AWS_REGION:-ap-southeast-2}
+      AWS_ACCESS_KEY_ID: <>
+      AWS_SECRET_ACCESS_KEY: <>
+      AWS_S3_BUCKET_NAME: files.therusticroots.com.au
     expose:
       - "3000"
-    depends_on:
-      database:
-        condition: service_healthy
     networks:
       - backend
       - frontend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/products"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3

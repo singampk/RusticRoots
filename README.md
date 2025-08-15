@@ -226,6 +226,15 @@ npx prisma migrate dev # Create migration
 - [ ] Performance optimization enabled
 - [ ] Monitoring and logging setup
 
+### Docker Container Build
+```bash
+# Build the container image
+docker build -t singampk/rusticroots .
+
+# Run the container
+docker run -p 3000:3000 singampk/rusticroots
+```
+
 ### Environment Variables (Production)
 ```bash
 DATABASE_URL="postgresql://prod_user:password@host:5432/rustic_roots"

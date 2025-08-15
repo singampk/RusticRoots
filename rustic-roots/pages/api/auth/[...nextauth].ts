@@ -13,30 +13,49 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
+        console.log('NextAuth authorize called with email:', credentials?.email)
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials')
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
+        try {
+          console.log('Connecting to database...')
+          await prisma.$connect()
+          
+          console.log('Looking up user:', credentials.email)
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
+          })
 
-        if (!user) {
+          if (!user) {
+            console.log('User not found:', credentials.email)
+            return null
+          }
+
+          console.log('User found, checking password...')
+          console.log('Stored hash:', user.password)
+          console.log('Provided password length:', credentials.password.length)
+          
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+          console.log('Password valid:', isPasswordValid)
+
+          if (!isPasswordValid) {
+            console.log('Invalid password for user:', credentials.email)
+            return null
+          }
+
+          console.log('Authentication successful for user:', user.email)
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role
+          }
+        } catch (error) {
+          console.error('NextAuth authorize error:', error)
           return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          image: user.image
         }
       }
     })
@@ -45,6 +64,18 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt'
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true,
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth Error:', code, metadata)
+    },
+    warn(code) {
+      console.warn('NextAuth Warning:', code)
+    },
+    debug(code, metadata) {
+      console.log('NextAuth Debug:', code, metadata)
+    }
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {

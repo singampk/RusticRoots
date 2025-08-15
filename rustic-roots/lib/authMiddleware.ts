@@ -42,8 +42,6 @@ export const authenticate = (handler: AuthHandler) => {
         email: true,
         name: true,
         role: true,
-        emailVerified: true,
-        image: true,
         password: true,
         createdAt: true,
         updatedAt: true

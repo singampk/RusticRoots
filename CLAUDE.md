@@ -398,7 +398,7 @@ npm run build -- --analyze
 
 **Docker Images:**
 - **Registry**: Docker Hub (singampk/rusticroots)
-- **Current Version**: v1.6.2
+- **Current Version**: v1.6.6-fixed
 - **Base Image**: node:18-alpine
 - **Output**: Next.js standalone mode
 
@@ -421,11 +421,11 @@ npm run build -- --analyze
 ### Connecting to Production Server
 
 ```bash
-# SSH into Lightsail instance
-ssh -i ~/Downloads/LightsailDefaultKey-ap-southeast-2.pem ubuntu@13.238.116.88
+# SSH into Lightsail instance (alias configured)
+ssh lightsail-default
 
 # Navigate to application directory
-cd /apps/rustic_roots
+cd /apps/rusticroots
 
 # Check running services
 docker ps
@@ -452,24 +452,26 @@ SELECT * FROM "Product" LIMIT 5; # View products
 1. **Build and Push Docker Image:**
    ```bash
    cd rustic-roots
-   docker build -t singampk/rusticroots:v1.6.2 .
-   docker push singampk/rusticroots:v1.6.2
+   docker build -t singampk/rusticroots:v1.6.X .
+   docker push singampk/rusticroots:v1.6.X
+   
+   # Update local docker-compose file with new version
    ```
 
 2. **Update Production:**
    ```bash
+   # Copy updated docker-compose to Lightsail
+   scp docker-compose.prod-ssl.yml lightsail-default:/apps/rusticroots/
+   
    # SSH to server
-   ssh -i ~/Downloads/LightsailDefaultKey-ap-southeast-2.pem ubuntu@13.238.116.88
+   ssh lightsail-default
    
    # Navigate to app directory
-   cd /apps/rustic_roots
-   
-   # Update docker-compose.yml with new image version
-   sed -i 's/v1\.6\.1/v1.6.2/g' docker-compose.prod-ssl.yml
+   cd /apps/rusticroots
    
    # Deploy new version
-   /usr/local/bin/docker-compose -f docker-compose.prod-ssl.yml pull app
-   /usr/local/bin/docker-compose -f docker-compose.prod-ssl.yml up -d app
+   docker-compose -f docker-compose.prod-ssl.yml pull app
+   docker-compose -f docker-compose.prod-ssl.yml up -d app
    
    # Verify deployment
    docker logs rusticroots-app-prod --tail 20
@@ -609,6 +611,43 @@ openssl x509 -in /apps/certbot/conf/live/therusticroots.com.au/fullchain.pem -te
    /usr/local/bin/docker-compose -f docker-compose.prod-ssl.yml restart
    ```
 
+## Shared Infrastructure with NulaEggs
+
+RusticRoots shares production infrastructure with NulaEggs on the same Lightsail instance:
+
+### Multi-Domain Configuration
+- **Nginx Config**: Uses multi-domain configuration (`nginx/ssl-prod-multi.conf`)
+- **Shared Services**: certbot, nginx containers managed from RusticRoots
+- **Network**: Both applications use `rustic_roots_frontend` Docker network
+- **Database**: Same RDS instance, separate databases
+
+### Current Deployment Status
+- **Domain**: https://therusticroots.com.au
+- **Container**: `singampk/rusticroots:v1.6.6-fixed`
+- **Infrastructure**: Primary application managing shared services
+- **SSL**: Let's Encrypt certificates for both domains
+
+### File Synchronization
+
+**IMPORTANT**: Always maintain local-Lightsail file synchronization:
+
+#### Key Files to Keep in Sync:
+- `docker-compose.prod-ssl.yml` → `/apps/rusticroots/docker-compose.prod-ssl.yml`
+- `nginx/ssl-prod.conf` → Single domain config (not used in production)
+- Shared nginx config managed by NulaEggs project
+
+#### Verification Commands:
+```bash
+# Compare local vs Lightsail files
+diff docker-compose.prod-ssl.yml <(ssh lightsail-default cat /apps/rusticroots/docker-compose.prod-ssl.yml)
+
+# The nginx config on Lightsail is the multi-domain version from NulaEggs project
+```
+
+### Related Projects
+- **NulaEggs**: Shares infrastructure (`/Users/singampk/work/exp/NulaEggs`)
+- **Multi-domain nginx**: Managed from NulaEggs project
+
 ### Development Notes
 - Uses PostgreSQL as primary database
 - TypeScript with strict mode enabled
@@ -619,3 +658,4 @@ openssl x509 -in /apps/certbot/conf/live/therusticroots.com.au/fullchain.pem -te
 - Production deployment on AWS Lightsail with Docker
 - SSL termination via Nginx with Let's Encrypt certificates
 - Automated image builds pushed to Docker Hub
+- Shares production infrastructure with NulaEggs application

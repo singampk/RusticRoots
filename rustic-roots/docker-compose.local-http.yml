@@ -23,7 +23,7 @@ services:
 
   # Next.js Application (HTTP)
   app:
-    image: singampk/rusticroots:v1.2.0
+    image: singampk/rusticroots:v1.6.6-fixed
     container_name: rusticroots-app-local
     restart: unless-stopped
     environment:

@@ -8,10 +8,12 @@ export default function Contact() {
     name: '',
     email: '',
     subject: '',
-    message: ''
+    message: '',
+    website: '' // Honeypot field
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -23,13 +25,34 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError('')
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    setSubmitted(true)
-    setIsSubmitting(false)
-    setFormData({ name: '', email: '', subject: '', message: '' })
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          type: 'contact'
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message')
+      }
+
+      setSubmitted(true)
+      setFormData({ name: '', email: '', subject: '', message: '', website: '' })
+    } catch (err) {
+      console.error('Form submission error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to send message. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -139,6 +162,17 @@ export default function Contact() {
                   </p>
                 </div>
               ) : (
+                <>
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+                      <div className="flex">
+                        <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-red-600">{error}</p>
+                      </div>
+                    </div>
+                  )}
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -211,6 +245,20 @@ export default function Contact() {
                     />
                   </div>
 
+                  {/* Honeypot field - hidden from users but visible to bots */}
+                  <div style={{ display: 'none' }}>
+                    <label htmlFor="website">Website (leave blank)</label>
+                    <input
+                      type="text"
+                      id="website"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleChange}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
+
                   <div className="bg-gray-50 rounded-md p-4">
                     <p className="text-sm text-gray-600">
                       <strong>For custom furniture requests:</strong> Please include details about dimensions, 
@@ -226,6 +274,7 @@ export default function Contact() {
                     {isSubmitting ? 'Sending...' : 'Send Message'}
                   </button>
                 </form>
+                </>
               )}
             </div>
           </div>

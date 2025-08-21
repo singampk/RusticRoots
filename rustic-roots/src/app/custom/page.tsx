@@ -16,10 +16,12 @@ export default function CustomFurniture() {
     dimensions: '',
     woodPreference: '',
     description: '',
-    inspiration: ''
+    inspiration: '',
+    website: '' // Honeypot field
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -31,16 +33,37 @@ export default function CustomFurniture() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError('')
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    setSubmitted(true)
-    setIsSubmitting(false)
-    setFormData({
-      name: '', email: '', phone: '', projectType: '', timeline: '', budget: '',
-      dimensions: '', woodPreference: '', description: '', inspiration: ''
-    })
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          type: 'custom-build'
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send custom build request')
+      }
+
+      setSubmitted(true)
+      setFormData({
+        name: '', email: '', phone: '', projectType: '', timeline: '', budget: '',
+        dimensions: '', woodPreference: '', description: '', inspiration: '', website: ''
+      })
+    } catch (err) {
+      console.error('Form submission error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to send request. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -270,6 +293,17 @@ export default function CustomFurniture() {
               </Link>
             </div>
           ) : (
+            <>
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+                  <div className="flex">
+                    <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-red-600">{error}</p>
+                  </div>
+                </div>
+              )}
             <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
@@ -440,6 +474,20 @@ export default function CustomFurniture() {
                 />
               </div>
 
+              {/* Honeypot field - hidden from users but visible to bots */}
+              <div style={{ display: 'none' }}>
+                <label htmlFor="website">Website (leave blank)</label>
+                <input
+                  type="text"
+                  id="website"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleChange}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
               <div className="bg-gray-50 rounded-md p-4 mb-6">
                 <p className="text-sm text-gray-600">
                   <strong>What happens next?</strong> After submitting this form, our design team will 
@@ -456,6 +504,7 @@ export default function CustomFurniture() {
                 {isSubmitting ? 'Submitting...' : 'Submit Custom Project Request'}
               </button>
             </form>
+            </>
           )}
         </div>
       </section>

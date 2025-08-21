@@ -17,6 +17,8 @@
 
 .amplify-deploy
 
+*.idea/*
+
 # next.js
 */.next/
 */out/

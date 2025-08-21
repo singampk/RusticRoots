@@ -61,6 +61,36 @@ export default function ProductDetail() {
     }).format(price)
   }
 
+  const getFallbackImage = (category: string, name: string) => {
+    const categoryLower = category.toLowerCase()
+    const nameLower = name.toLowerCase()
+    
+    if (nameLower.includes('table') || categoryLower.includes('table')) {
+      if (nameLower.includes('dining') || nameLower.includes('dinner')) {
+        return '/images/dining-table.svg'
+      } else if (nameLower.includes('coffee') || nameLower.includes('side')) {
+        return '/images/coffee-table.svg'
+      }
+      return '/images/dining-table.svg'
+    }
+    
+    if (nameLower.includes('chair') || categoryLower.includes('chair') || categoryLower.includes('seating')) {
+      return '/images/rocking-chair.svg'
+    }
+    
+    if (nameLower.includes('shelf') || nameLower.includes('bookcase') || categoryLower.includes('storage')) {
+      return '/images/bookshelf.svg'
+    }
+    
+    // Default fallback
+    const images = ['/images/dining-table.svg', '/images/coffee-table.svg', '/images/rocking-chair.svg', '/images/bookshelf.svg']
+    const hash = name.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0)
+      return a & a
+    }, 0)
+    return images[Math.abs(hash) % images.length]
+  }
+
   const handleAddToCart = async () => {
     if (!product) return
 
@@ -74,7 +104,7 @@ export default function ProductDetail() {
           id: product.id,
           name: product.name,
           price: product.price,
-          image: product.images[0] || '/placeholder-furniture.svg'
+          image: product.images[0] || getFallbackImage(product.category, product.name)
         }
       })
     }
@@ -176,7 +206,7 @@ export default function ProductDetail() {
                   >
                     <span className="sr-only">Image {index + 1}</span>
                     <span className="absolute inset-0 rounded-md overflow-hidden">
-                      {image && image !== '/placeholder-furniture.svg' ? (
+                      {image && !image.includes('placeholder-furniture.svg') ? (
                         <Image
                           src={image}
                           alt={`${product.name} view ${index + 1}`}
@@ -184,11 +214,12 @@ export default function ProductDetail() {
                           className="w-full h-full object-center object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
+                        <Image
+                          src={getFallbackImage(product.category, product.name)}
+                          alt={`${product.name} view ${index + 1}`}
+                          fill
+                          className="w-full h-full object-center object-cover"
+                        />
                       )}
                     </span>
                   </button>
@@ -199,7 +230,7 @@ export default function ProductDetail() {
             {/* Main image */}
             <div className="w-full aspect-w-1 aspect-h-1">
               <div className="w-full h-96 sm:h-[500px] bg-white rounded-lg overflow-hidden relative">
-                {product.images[selectedImage] && product.images[selectedImage] !== '/placeholder-furniture.svg' ? (
+                {product.images[selectedImage] && !product.images[selectedImage].includes('placeholder-furniture.svg') ? (
                   <Image
                     src={product.images[selectedImage]}
                     alt={product.name}
@@ -207,11 +238,12 @@ export default function ProductDetail() {
                     className="w-full h-full object-center object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                    <svg className="w-24 h-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
+                  <Image
+                    src={getFallbackImage(product.category, product.name)}
+                    alt={product.name}
+                    fill
+                    className="w-full h-full object-center object-cover"
+                  />
                 )}
               </div>
             </div>

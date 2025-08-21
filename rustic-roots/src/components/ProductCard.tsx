@@ -31,6 +31,36 @@ export default function ProductCard({ product }: ProductCardProps) {
     }).format(price)
   }
 
+  const getFallbackImage = (category: string, name: string) => {
+    const categoryLower = category.toLowerCase()
+    const nameLower = name.toLowerCase()
+    
+    if (nameLower.includes('table') || categoryLower.includes('table')) {
+      if (nameLower.includes('dining') || nameLower.includes('dinner')) {
+        return '/images/dining-table.svg'
+      } else if (nameLower.includes('coffee') || nameLower.includes('side')) {
+        return '/images/coffee-table.svg'
+      }
+      return '/images/dining-table.svg'
+    }
+    
+    if (nameLower.includes('chair') || categoryLower.includes('chair') || categoryLower.includes('seating')) {
+      return '/images/rocking-chair.svg'
+    }
+    
+    if (nameLower.includes('shelf') || nameLower.includes('bookcase') || categoryLower.includes('storage')) {
+      return '/images/bookshelf.svg'
+    }
+    
+    // Default fallback
+    const images = ['/images/dining-table.svg', '/images/coffee-table.svg', '/images/rocking-chair.svg', '/images/bookshelf.svg']
+    const hash = name.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0)
+      return a & a
+    }, 0)
+    return images[Math.abs(hash) % images.length]
+  }
+
   const handleAddToCart = async () => {
     setIsAdding(true)
     
@@ -40,7 +70,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0] || '/placeholder-furniture.svg'
+        image: product.images[0] || getFallbackImage(product.category, product.name)
       }
     })
 

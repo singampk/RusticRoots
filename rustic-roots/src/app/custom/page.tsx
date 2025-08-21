@@ -208,7 +208,7 @@ export default function CustomFurniture() {
             
             <div className="relative">
               <Image
-                src="/placeholder-furniture.svg"
+                src="/images/rocking-chair.svg"
                 alt="Master craftsman working on custom furniture"
                 width={600}
                 height={384}

@@ -128,7 +128,7 @@ export default function AdminDashboard() {
       price: '',
       category: 'Tables',
       stock: '',
-      images: ['/placeholder-furniture.svg'],
+      images: ['/images/dining-table.svg'],
       mainImageIndex: 0,
       featured: false
     })
@@ -145,7 +145,7 @@ export default function AdminDashboard() {
       price: product.price.toString(),
       category: product.category,
       stock: product.stock.toString(),
-      images: product.images.length > 0 ? product.images : ['/placeholder-furniture.svg'],
+      images: product.images.length > 0 ? product.images : ['/images/dining-table.svg'],
       mainImageIndex: 0, // Default to first image as main for existing products
       featured: product.featured
     })

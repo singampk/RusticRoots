@@ -8,17 +8,19 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(uuid())
-  name            String?
-  email           String           @unique
-  password        String
-  role            Role             @default(USER)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  orders          Order[]
-  products        Product[]
-  promotions      Promotion[]
-  promotionUsages PromotionUsage[]
+  id               String           @id @default(uuid())
+  name             String?
+  email            String           @unique
+  password         String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  role             Role             @default(USER)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  orders           Order[]
+  products         Product[]
+  promotions       Promotion[]
+  promotionUsages  PromotionUsage[]
 }
 
 model Product {
@@ -40,10 +42,12 @@ model Product {
 
 model Order {
   id                String           @id @default(uuid())
+  orderNumber       String           @unique
   total             Float
   subtotal          Float
   discountAmount    Float            @default(0)
   status            OrderStatus      @default(RECEIVED_ORDER)
+  shippingAddress   Json?
   notes             String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt

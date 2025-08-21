@@ -174,8 +174,12 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-2xl font-bold text-amber-400 mb-4">Rustic Roots</h3>
-              <p className="text-gray-300">
+              <p className="text-gray-300 mb-3">
                 Crafting beautiful, sustainable wooden furniture for your home since 2020.
+              </p>
+              <p className="text-gray-400 text-sm">
+                <strong>Rustic Roots Trading Co.</strong><br />
+                ABN: 96 672 808 963
               </p>
             </div>
             
@@ -212,7 +216,7 @@ export default function Home() {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-300">
-            <p>&copy; 2024 Rustic Roots. All rights reserved.</p>
+            <p>&copy; 2024 Rustic Roots Trading Co. All rights reserved.</p>
           </div>
         </div>
       </footer>

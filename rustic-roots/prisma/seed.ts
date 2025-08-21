@@ -255,6 +255,7 @@ async function main() {
     // Order with promotion
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737448800000',
         total: 1169.99, // $1299.99 - $130 (10% of $1299.99 = $129.99, rounded)
         subtotal: 1299.99,
         discountAmount: 130.00,
@@ -285,6 +286,7 @@ async function main() {
     // Another order with SUMMER50 promotion
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737448900000',
         total: 849.99, // $899.99 - $50
         subtotal: 899.99,
         discountAmount: 50.00,
@@ -315,6 +317,7 @@ async function main() {
     // Recent orders - RECEIVED_ORDER status
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449000000',
         total: 1299.99,
         subtotal: 1299.99,
         discountAmount: 0,
@@ -335,6 +338,7 @@ async function main() {
     }),
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449100000',
         total: 649.99,
         subtotal: 649.99,
         discountAmount: 0,
@@ -357,6 +361,7 @@ async function main() {
     // Orders being reviewed - REVIEWING_ORDER status
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449200000',
         total: 1599.98,
         subtotal: 1599.98,
         discountAmount: 0,
@@ -383,6 +388,7 @@ async function main() {
     }),
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449300000',
         total: 1499.99,
         subtotal: 1499.99,
         discountAmount: 0,
@@ -406,6 +412,7 @@ async function main() {
     // Work in progress orders - WORK_IN_PROGRESS status
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449400000',
         total: 899.99,
         subtotal: 899.99,
         discountAmount: 0,
@@ -427,6 +434,7 @@ async function main() {
     }),
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449500000',
         total: 949.98,
         subtotal: 949.98,
         discountAmount: 0,
@@ -455,6 +463,7 @@ async function main() {
     // Shipping orders - IN_SHIPPING status
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449600000',
         total: 1649.98,
         subtotal: 1649.98,
         discountAmount: 0,
@@ -481,6 +490,7 @@ async function main() {
     }),
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449700000',
         total: 349.99,
         subtotal: 349.99,
         discountAmount: 0,
@@ -504,6 +514,7 @@ async function main() {
     // Delivered orders - DELIVERED status
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449800000',
         total: 1749.98,
         subtotal: 1749.98,
         discountAmount: 0,
@@ -530,6 +541,7 @@ async function main() {
     }),
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449900000',
         total: 1099.99,
         subtotal: 1099.99,
         discountAmount: 0,
@@ -551,6 +563,7 @@ async function main() {
     }),
     prisma.order.create({
       data: {
+        orderNumber: 'RR1737449900000',
         total: 949.98,
         subtotal: 949.98,
         discountAmount: 0,

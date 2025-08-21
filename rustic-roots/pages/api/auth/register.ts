@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import bcrypt from 'bcryptjs'
 import prisma from '../../../lib/prisma'
+import { sendWelcomeEmail } from '../../../lib/emailService'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -54,6 +55,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
 
     console.log('User created successfully:', user.id)
+    
+    // Send welcome email (don't wait for it to complete)
+    sendWelcomeEmail(user).catch(error => {
+      console.error('Failed to send welcome email:', error)
+      // Don't fail registration if email fails
+    })
+
     return res.status(201).json({ user })
   } catch (error) {
     console.error('Registration error details:', {

@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { OrderStatus } from '@prisma/client'
 import prisma from '../../../../lib/prisma'
 import { verifyRole } from '../../../../lib/authMiddleware'
+import { sendOrderStatusUpdateEmail } from '../../../../lib/emailService'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PATCH') {
@@ -22,6 +23,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Verify admin role
     await verifyRole(req, 'ADMIN')
+
+    // Get the current order to check the old status
+    const currentOrder = await prisma.order.findUnique({
+      where: { id },
+      select: { status: true }
+    })
+
+    if (!currentOrder) {
+      return res.status(404).json({ error: 'Order not found' })
+    }
+
+    const oldStatus = currentOrder.status
 
     const updatedOrder = await prisma.order.update({
       where: { id },
@@ -50,6 +63,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     })
+
+    // Send order status update email if status changed
+    if (oldStatus !== status) {
+      sendOrderStatusUpdateEmail(updatedOrder, oldStatus, status).catch(error => {
+        console.error('Failed to send order status update email:', error)
+        // Don't fail status update if email fails
+      })
+    }
 
     return res.status(200).json({
       success: true,

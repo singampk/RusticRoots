@@ -80,7 +80,6 @@ function createTransporter() {
   const {
     SMTP_HOST,
     SMTP_PORT,
-    SMTP_SECURE,
     SMTP_USER,
     SMTP_PASSWORD
   } = process.env

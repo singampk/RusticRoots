@@ -1,6 +1,7 @@
 import { NextApiResponse } from 'next'
 import prisma from '../../../lib/prisma'
 import { authenticate, AuthenticatedRequest } from '../../../lib/authMiddleware'
+import { sendOrderConfirmationEmail } from '../../../lib/emailService'
 
 export default authenticate(async function handler(
   req: AuthenticatedRequest,
@@ -61,9 +62,13 @@ export default authenticate(async function handler(
         const { items, ...orderData } = req.body
         const userId = req.user.id
         
+        // Generate unique order number
+        const orderNumber = `RR${Date.now()}`
+        
         const order = await prisma.order.create({
           data: {
             ...orderData,
+            orderNumber,
             user: { connect: { id: userId } },
             items: {
               create: items.map((item: { productId: string; quantity: number; price: number }) => ({
@@ -74,14 +79,33 @@ export default authenticate(async function handler(
             }
           },
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
             items: {
               include: {
-                product: true
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    price: true
+                  }
+                }
               }
             }
           }
         })
+        
+        // Send order confirmation email (don't wait for it to complete)
+        sendOrderConfirmationEmail(order).catch(error => {
+          console.error('Failed to send order confirmation email:', error)
+          // Don't fail order creation if email fails
+        })
+        
         return res.status(201).json(order)
       
       default:
